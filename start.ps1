@@ -4,6 +4,7 @@ Pulls prebuilt GHCR images and runs containers for SNMP (UDP 161/162) and MIBs c
 This script replaces the previous start.sh and is intended to be idempotent.
 #>
 
+[CmdletBinding()]
 param(
   [string]$InstallDir = $(Get-Location).Path
 )
@@ -25,9 +26,6 @@ $snmpContainer = 'snmpd-sharpsnmp'
 
 $mibsImage = 'ghcr.io/lextudio/mibs.pysnmp.com:cache'
 $mibsContainer = 'mibs-cache'
-
-[CmdletBinding(SupportsShouldProcess=$true)]
-param()
 
 function Start-ContainerFromImage {
   param(
