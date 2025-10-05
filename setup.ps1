@@ -50,12 +50,6 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   Write-Log "Docker found at $(Get-Command docker). Skipping install."
 }
 
-Write-Log "Setting executable bits on start.ps1 and weekly-maintenance.ps1"
-chmod +x "$InstallDir/start.ps1" -ErrorAction SilentlyContinue
-chmod +x "$InstallDir/weekly-maintenance.ps1" -ErrorAction SilentlyContinue
-
-Write-Log "Skipping weekly maintenance unit installation (managed by Azure automatic updates)"
-
 Write-Log "Invoking start.ps1 to pull images and run containers"
 if (Test-Path "$InstallDir/start.ps1") {
   sudo pwsh -NoProfile -ExecutionPolicy Bypass -File "$InstallDir/start.ps1" "$InstallDir"
