@@ -21,6 +21,15 @@ if (-not $isRoot) {
 
 Write-Log "Starting start.ps1 in $InstallDir"
 
+Write-Log "Checking Docker availability"
+try {
+  $dv = & docker version --format '{{.Server.Version}}' 2>&1
+  Write-Log "Docker server version: $dv"
+} catch {
+  Write-Error "Docker does not appear to be available or running: $_"
+  exit 3
+}
+
 $snmpImage = 'ghcr.io/lextudio/docker-snmpd-sharpsnmp:main'
 $snmpContainer = 'snmpd-sharpsnmp'
 
@@ -35,20 +44,32 @@ function Start-ContainerFromImage {
   )
 
   Write-Log "Pulling image $Image"
-  & docker pull $Image | Out-Null
+  try {
+    # Stream docker pull output so progress is visible in SSH session
+    & docker pull $Image 2>&1 | ForEach-Object { Write-Log $_ }
+  } catch {
+    Write-Error "docker pull failed for $Image: $_"
+    throw
+  }
 
+  Write-Log "Checking for existing container named $ContainerName"
   $existing = docker ps -a --format '{{.Names}}' | Select-String -SimpleMatch $ContainerName
   if ($existing) {
     Write-Log "Removing existing container $ContainerName"
-    & docker rm -f $ContainerName | Out-Null
+    try { & docker rm -f $ContainerName 2>&1 | ForEach-Object { Write-Log $_ } } catch { Write-Error "docker rm failed: $_"; throw }
   }
 
   $args = @('run','-d','--name',$ContainerName,'--restart','unless-stopped')
   foreach ($p in $Ports) { $args += '-p'; $args += $p }
   $args += $Image
 
-  Write-Log "Running container $ContainerName"
-  & docker @args | Out-Null
+  Write-Log "Running container $ContainerName (docker ${args -join ' '})"
+  try {
+    & docker @args 2>&1 | ForEach-Object { Write-Log $_ }
+  } catch {
+    Write-Error "docker run failed for $ContainerName: $_"
+    throw
+  }
 }
 
 Start-ContainerFromImage -Image $snmpImage -ContainerName $snmpContainer -Ports @('161:161/udp','162:162/udp')
