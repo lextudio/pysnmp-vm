@@ -33,7 +33,7 @@ try {
 $snmpImage = 'ghcr.io/lextudio/docker-snmpd-sharpsnmp:main'
 $snmpContainer = 'snmpd-sharpsnmp'
 
-$mibsImage = 'ghcr.io/lextudio/mibs.pysnmp.com:cache'
+$mibsImage = 'ghcr.io/lextudio/mibs.pysnmp.com:master'
 $mibsContainer = 'mibs-cache'
 
 function Start-ContainerFromImage {
