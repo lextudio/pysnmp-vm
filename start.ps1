@@ -48,7 +48,7 @@ function Start-ContainerFromImage {
     # Stream docker pull output so progress is visible in SSH session
     & docker pull $Image 2>&1 | ForEach-Object { Write-Log $_ }
   } catch {
-    Write-Error "docker pull failed for $Image: $_"
+    Write-Error "docker pull failed for $($Image): $($_.Exception.Message)"
     throw
   }
 
@@ -56,7 +56,7 @@ function Start-ContainerFromImage {
   $existing = docker ps -a --format '{{.Names}}' | Select-String -SimpleMatch $ContainerName
   if ($existing) {
     Write-Log "Removing existing container $ContainerName"
-    try { & docker rm -f $ContainerName 2>&1 | ForEach-Object { Write-Log $_ } } catch { Write-Error "docker rm failed: $_"; throw }
+  try { & docker rm -f $ContainerName 2>&1 | ForEach-Object { Write-Log $_ } } catch { Write-Error "docker rm failed: $($_.Exception.Message)"; throw }
   }
 
   $args = @('run','-d','--name',$ContainerName,'--restart','unless-stopped')
@@ -67,7 +67,7 @@ function Start-ContainerFromImage {
   try {
     & docker @args 2>&1 | ForEach-Object { Write-Log $_ }
   } catch {
-    Write-Error "docker run failed for $ContainerName: $_"
+    Write-Error "docker run failed for $($ContainerName): $($_.Exception.Message)"
     throw
   }
 }
