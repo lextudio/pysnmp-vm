@@ -60,4 +60,29 @@ if (Test-Path "$InstallDir/start.ps1") {
 Write-Log "Pruning unused Docker images"
 sudo docker image prune -af || Write-Log "docker prune failed"
 
+Write-Log "Ensuring firewall (ufw) allows needed ports"
+try {
+  if (-not (Get-Command ufw -ErrorAction SilentlyContinue)) {
+    Write-Log "Installing ufw"
+    sudo apt-get install -y ufw
+  }
+
+  # Allow SSH first to avoid lockout
+  Write-Log "Allowing OpenSSH to prevent lockout"
+  ufw allow OpenSSH || Write-Log "ufw allow OpenSSH failed"
+
+  Write-Log "Allowing TCP ports 80 and 443"
+  ufw allow 80/tcp || Write-Log "ufw allow 80/tcp failed"
+  ufw allow 443/tcp || Write-Log "ufw allow 443/tcp failed"
+
+  Write-Log "Allowing UDP ports 161 and 162"
+  ufw allow 161/udp || Write-Log "ufw allow 161/udp failed"
+  ufw allow 162/udp || Write-Log "ufw allow 162/udp failed"
+
+  Write-Log "Enabling ufw (non-interactive)"
+  ufw --force enable || Write-Log "ufw enable failed"
+} catch {
+  Write-Log "Firewall configuration failed: $($_.Exception.Message)"
+}
+
 Write-Log "PowerShell setup completed"
